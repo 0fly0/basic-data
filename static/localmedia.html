@@ -1,0 +1,104 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <base target="_blank">
+  
+  <title>WebRTC samples</title>
+  <script
+  src="https://webrtc.github.io/adapter/adapter-latest.js"
+  type="text/javascript"></script>
+
+  <script type="text/javascript">
+    var video;
+    var constraints = window.constraints = {
+        audio: true,
+        video: true
+    };
+    var constraints_tmp;
+
+    window.onload = function(){
+        video = document.getElementById("myVideo");
+        getMedia();
+    }
+    
+    function handleSuccess(stream) {
+        var videoTracks = stream.getVideoTracks();
+        console.log('Got stream with constraints:', constraints_tmp);
+        console.log('Using video device: ' + videoTracks[0].label);
+        stream.oninactive = function() {
+            console.log('Stream inactive');
+        };
+        window.stream = stream; // make variable available to browser console
+        video.srcObject = stream; //通过视频元素播放捕获的MediaStream
+    }
+
+    function handleError(error) {
+        if (error.name === 'ConstraintNotSatisfiedError') {
+            errorMsg('The resolution ' + constraints.video.width.exact + 'x' +
+                constraints.video.width.exact + ' px is not supported by your device.');
+        } else if (error.name === 'PermissionDeniedError') {
+            errorMsg('Permissions have not been granted to use your camera and ' +
+              'microphone, you need to allow the page access to your devices in ' +
+              'order for the demo to work.');
+        }
+        errorMsg('getUserMedia error: ' + error.name, error);
+    }
+    
+    function errorMsg(msg, error) {
+        if (typeof error !== 'undefined') {
+            console.error(error);
+        }
+    }
+
+    //获取本地媒体
+    function getMedia(){
+    	var enumeratorPromise = navigator.mediaDevices.enumerateDevices().then(function(devices) {
+    	var cam = devices.find(function(device) {
+          return device.kind === "videoinput";
+        });
+        var mic = devices.find(function(device) {
+            return device.kind === "audioinput";
+        });
+        constraints_tmp = {video:cam && constraints.video, audio:mic && constraints.audio}; 
+        navigator.mediaDevices.getUserMedia(constraints_tmp).        
+            then(handleSuccess).catch(handleError);
+         /* console.log("getUserMedia start mediaConstraints=" + JSON.stringify(constraints));
+          return navigator.mediaDevices.getUserMedia(constraints)
+                    .then(function(stream) {
+                      gotUserMedia(stream);
+			video.srcObject = stream;	
+                    }).catch(function(err) {
+                      console.log(err.name);
+                    });*/
+        });
+        console.log(enumeratorPromise);
+    }
+        
+    function gotUserMedia(stream) {
+        myVideoStream = stream;
+        video.srcObject = stream;
+        // display my local video to me
+        //attachMediaStream(video, myVideoStream);
+    }
+  </script>
+
+  <style>
+    video{
+        width:320px;
+        height:240px;
+        border:1px solid black;
+    }
+  </style>
+</head>
+
+<body>
+    <div style="width:30%;vertical-align:top">
+        <div>
+            <video id="myVideo" aotoplay="aotoplay" controls playsinline />
+        </div>
+    </div> 
+</body>
+</html>
